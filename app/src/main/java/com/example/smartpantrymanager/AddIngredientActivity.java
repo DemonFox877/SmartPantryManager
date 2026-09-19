@@ -97,11 +97,59 @@ public class AddIngredientActivity extends AppCompatActivity {
             return;
         }
 
-        // Temporary feedback until we connect the database.
-        Toast.makeText(
-                this,
-                "Input is valid. Saving is not connected yet.",
-                Toast.LENGTH_LONG
-        ).show();
+        String selectedUnit = unit.getSelectedItem().toString();
+
+// Prevent repeated taps while saving.
+        findViewById(R.id.btnSaveIngredient).setEnabled(false);
+        findViewById(R.id.btnCancel).setEnabled(false);
+
+// Run database work away from the screen's main thread.
+        new Thread(() -> {
+            boolean saved = false;
+
+            try (DatabaseHelper database =
+                         new DatabaseHelper(getApplicationContext())) {
+
+                long recordId = database.addIngredient(
+                        name, amount, selectedUnit);
+
+                saved = recordId != -1;
+
+            } catch (android.database.sqlite.SQLiteException exception) {
+                android.util.Log.e(
+                        "AddIngredient",
+                        "Could not save ingredient",
+                        exception);
+            }
+
+            final boolean saveSuccessful = saved;
+
+            // Screen updates must run on the main thread.
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+
+                findViewById(R.id.btnSaveIngredient).setEnabled(true);
+                findViewById(R.id.btnCancel).setEnabled(true);
+
+                if (saveSuccessful) {
+                    Toast.makeText(
+                            this,
+                            "Ingredient saved",
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                    finish();
+                } else {
+                    Toast.makeText(
+                            this,
+                            "Could not save. Please try again.",
+                            Toast.LENGTH_LONG
+                    ).show();
+                }
+            });
+        }).start();
     }
 }
+
