@@ -6,10 +6,12 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-public class DatabaseHelper extends SQLiteOpenHelper {
+import java.util.ArrayList;
+import java.util.List;
 
+public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "smart_pantry.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     public static final String TABLE_PANTRY = "pantry";
     public static final String COL_ID = "_id";
@@ -18,99 +20,131 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COL_UNIT = "unit";
 
     public DatabaseHelper(Context context) {
-        super(context.getApplicationContext(),
-                DATABASE_NAME, null, DATABASE_VERSION);
+        super(context.getApplicationContext(), DATABASE_NAME, null, DATABASE_VERSION);
+    }
+
+    @Override
+    public void onConfigure(SQLiteDatabase db) {
+        super.onConfigure(db);
+        db.setForeignKeyConstraintsEnabled(true);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // Each pantry record has an ID, name, quantity and unit.
-        String createPantryTable =
-                "CREATE TABLE " + TABLE_PANTRY + " (" +
-                        COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                        COL_NAME + " TEXT NOT NULL CHECK(length(trim(name)) > 0), " +
-                        COL_QUANTITY + " REAL NOT NULL CHECK(quantity > 0), " +
-                        COL_UNIT + " TEXT NOT NULL " +
-                        "CHECK(unit IN ('g', 'kg', 'ml', 'l', 'pcs')))";
-
-        db.execSQL(createPantryTable);
+        db.execSQL("CREATE TABLE pantry ("
+                + "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + "name TEXT NOT NULL CHECK(length(trim(name)) > 0), "
+                + "quantity REAL NOT NULL CHECK(quantity > 0), "
+                + "unit TEXT NOT NULL CHECK(unit IN ('g', 'kg', 'ml', 'l', 'pcs')))" );
+        createRecipeTables(db);
+        RecipeSeed.insertAll(db);
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase db,
-                          int oldVersion, int newVersion) {
-        // Add a migration here when we change the database version.
-        // Stop rather than silently deleting existing pantry data.
-        throw new IllegalStateException(
-                "Database migration required from "
-                        + oldVersion + " to " + newVersion);
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // SQLiteOpenHelper wraps this migration in a transaction.
+        // Keep the existing pantry table and its rows intact.
+        if (oldVersion < 2) {
+            createRecipeTables(db);
+            RecipeSeed.insertAll(db);
+        }
+    }
+
+    private void createRecipeTables(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE recipes ("
+                + "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + "name TEXT NOT NULL UNIQUE, instructions TEXT NOT NULL)");
+        db.execSQL("CREATE TABLE recipe_ingredients ("
+                + "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + "recipe_id INTEGER NOT NULL REFERENCES recipes(_id) ON DELETE CASCADE, "
+                + "name TEXT NOT NULL CHECK(length(trim(name)) > 0), "
+                + "quantity REAL NOT NULL CHECK(quantity > 0), "
+                + "unit TEXT NOT NULL CHECK(unit IN ('g', 'kg', 'ml', 'l', 'pcs')))");
+        db.execSQL("CREATE INDEX idx_recipe_ingredients_recipe "
+                + "ON recipe_ingredients(recipe_id)");
+    }
+
+    private ContentValues ingredientValues(String name, double quantity, String unit) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Ingredient name is required");
+        }
+        if (Double.isNaN(quantity) || Double.isInfinite(quantity) || quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+        ContentValues values = new ContentValues();
+        values.put(COL_NAME, name.trim());
+        values.put(COL_QUANTITY, quantity);
+        values.put(COL_UNIT, unit);
+        return values;
     }
 
     public long addIngredient(String name, double quantity, String unit) {
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Ingredient name is required");
-        }
+        return getWritableDatabase().insert(TABLE_PANTRY, null,
+                ingredientValues(name, quantity, unit));
+    }
 
-        if (Double.isNaN(quantity) || Double.isInfinite(quantity)
-                || quantity <= 0) {
-            throw new IllegalArgumentException("Quantity must be positive");
-        }
+    public int updateIngredient(long id, String name, double quantity, String unit) {
+        return getWritableDatabase().update(TABLE_PANTRY,
+                ingredientValues(name, quantity, unit), COL_ID + " = ?",
+                new String[]{String.valueOf(id)});
+    }
 
-        ContentValues values = new ContentValues();
-        values.put(COL_NAME, name.trim());
-        values.put(COL_QUANTITY, quantity);
-        values.put(COL_UNIT, unit);
-
-        // Returns the new record ID, or -1 if insertion fails.
-        return getWritableDatabase().insert(
-                TABLE_PANTRY, null, values);
+    public int deleteIngredient(long id) {
+        return getWritableDatabase().delete(TABLE_PANTRY, COL_ID + " = ?",
+                new String[]{String.valueOf(id)});
     }
 
     public Cursor getAllIngredients() {
-        // The caller must close this Cursor after reading the results.
-        return getReadableDatabase().query(
-                TABLE_PANTRY,
+        return getReadableDatabase().query(TABLE_PANTRY,
                 new String[]{COL_ID, COL_NAME, COL_QUANTITY, COL_UNIT},
-                null,
-                null,
-                null,
-                null,
-                COL_NAME + " COLLATE NOCASE ASC"
-        );
-    }
-    // Update the ingredient with this specific database ID.
-    public int updateIngredient(long id, String name,
-                                double quantity, String unit) {
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Ingredient name is required");
-        }
-
-        if (Double.isNaN(quantity)
-                || Double.isInfinite(quantity)
-                || quantity <= 0) {
-            throw new IllegalArgumentException("Quantity must be positive");
-        }
-
-        ContentValues values = new ContentValues();
-        values.put(COL_NAME, name.trim());
-        values.put(COL_QUANTITY, quantity);
-        values.put(COL_UNIT, unit);
-
-        return getWritableDatabase().update(
-                TABLE_PANTRY,
-                values,
-                COL_ID + " = ?",
-                new String[]{String.valueOf(id)}
-        );
+                null, null, null, null, COL_NAME + " COLLATE NOCASE ASC");
     }
 
-    // Delete only the ingredient with this specific database ID.
-    public int deleteIngredient(long id) {
-        return getWritableDatabase().delete(
-                TABLE_PANTRY,
-                COL_ID + " = ?",
-                new String[]{String.valueOf(id)}
-        );
+    public List<PantryItem> getPantryItems() {
+        List<PantryItem> items = new ArrayList<>();
+        try (Cursor cursor = getAllIngredients()) {
+            while (cursor.moveToNext()) {
+                items.add(new PantryItem(cursor.getLong(0), cursor.getString(1),
+                        cursor.getDouble(2), cursor.getString(3)));
+            }
+        }
+        return items;
+    }
+
+    public List<Recipe> getAllRecipes() {
+        SQLiteDatabase db = getReadableDatabase();
+        List<Recipe> recipes = new ArrayList<>();
+        try (Cursor cursor = db.query("recipes",
+                new String[]{"_id", "name", "instructions"},
+                null, null, null, null, "name COLLATE NOCASE ASC")) {
+            while (cursor.moveToNext()) {
+                recipes.add(readRecipe(db, cursor));
+            }
+        }
+        return recipes;
+    }
+
+    public Recipe getRecipe(long id) {
+        SQLiteDatabase db = getReadableDatabase();
+        try (Cursor cursor = db.query("recipes",
+                new String[]{"_id", "name", "instructions"},
+                "_id = ?", new String[]{String.valueOf(id)}, null, null, null)) {
+            return cursor.moveToFirst() ? readRecipe(db, cursor) : null;
+        }
+    }
+
+    private Recipe readRecipe(SQLiteDatabase db, Cursor cursor) {
+        long id = cursor.getLong(0);
+        List<Recipe.Ingredient> ingredients = new ArrayList<>();
+        try (Cursor rows = db.query("recipe_ingredients",
+                new String[]{"name", "quantity", "unit"},
+                "recipe_id = ?", new String[]{String.valueOf(id)},
+                null, null, "_id ASC")) {
+            while (rows.moveToNext()) {
+                ingredients.add(new Recipe.Ingredient(rows.getString(0),
+                        rows.getDouble(1), rows.getString(2)));
+            }
+        }
+        return new Recipe(id, cursor.getString(1), cursor.getString(2), ingredients);
     }
 }
-

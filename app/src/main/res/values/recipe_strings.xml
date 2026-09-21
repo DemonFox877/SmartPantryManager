@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="recipe_screen_title">Suggested Recipes</string>
+    <string name="recipe_screen_description">Recipes appear only when you have every ingredient in sufficient quantities. Each suggestion is checked separately.</string>
+    <string name="recipe_loading">Checking your pantry…</string>
+    <string name="recipe_empty_pantry">Your pantry is empty. Add ingredients, then return here.</string>
+    <string name="recipe_no_matches">No recipes match yet. Add the missing ingredients or increase their quantities. Names and compatible units must match; water and oil count too.</string>
+    <string name="recipe_match_count">%1$d of %2$d recipes match. Tap a recipe to view its ingredients and steps.</string>
+    <string name="recipe_load_failed">Could not load recipes. Please try again.</string>
+    <string name="recipe_retry">Try Again</string>
+    <string name="recipe_back_pantry">Back to Pantry</string>
+    <string name="recipe_detail_title">Recipe</string>
+    <string name="recipe_available">You have enough of every ingredient for this recipe.</string>
+    <string name="recipe_not_available">Your pantry no longer has enough of every ingredient for this recipe.</string>
+    <string name="recipe_not_found">This recipe could not be found. Return to the recipe list.</string>
+    <string name="recipe_ingredients_heading">Ingredients</string>
+    <string name="recipe_steps_heading">Steps</string>
+    <string name="recipe_quantity_note">Quantities are for one preparation. For bread, 1 pcs means one slice.</string>
+    <string name="recipe_back_list">Back to Recipes</string>
+</resources>

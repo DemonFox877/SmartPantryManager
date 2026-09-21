@@ -67,6 +67,11 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        findViewById(R.id.btnSuggestedRecipes).setOnClickListener(view -> {
+            Intent intent = new Intent(
+                    MainActivity.this, SuggestedRecipesActivity.class);
+            startActivity(intent);
+        });
         // Open the options for the ingredient that was tapped.
         pantryList.setOnItemClickListener((parent, view, position, id) -> {
             PantryItem item = pantryAdapter.getItem(position);
