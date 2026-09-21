@@ -78,4 +78,39 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COL_NAME + " COLLATE NOCASE ASC"
         );
     }
+    // Update the ingredient with this specific database ID.
+    public int updateIngredient(long id, String name,
+                                double quantity, String unit) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Ingredient name is required");
+        }
+
+        if (Double.isNaN(quantity)
+                || Double.isInfinite(quantity)
+                || quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+
+        ContentValues values = new ContentValues();
+        values.put(COL_NAME, name.trim());
+        values.put(COL_QUANTITY, quantity);
+        values.put(COL_UNIT, unit);
+
+        return getWritableDatabase().update(
+                TABLE_PANTRY,
+                values,
+                COL_ID + " = ?",
+                new String[]{String.valueOf(id)}
+        );
+    }
+
+    // Delete only the ingredient with this specific database ID.
+    public int deleteIngredient(long id) {
+        return getWritableDatabase().delete(
+                TABLE_PANTRY,
+                COL_ID + " = ?",
+                new String[]{String.valueOf(id)}
+        );
+    }
 }
+
