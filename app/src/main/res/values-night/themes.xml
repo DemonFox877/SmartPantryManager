@@ -1,7 +1,31 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.SmartPantryManager" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+<resources>
+
+    <style name="Base.Theme.SmartPantryManager"
+        parent="Theme.Material3.DayNight.NoActionBar">
+
+        <item name="colorPrimary">#A8CFAF</item>
+        <item name="colorOnPrimary">#153822</item>
+        <item name="colorPrimaryContainer">#2D5038</item>
+        <item name="colorOnPrimaryContainer">#D5E8D0</item>
+
+        <item name="colorSecondary">#B7CCAF</item>
+        <item name="colorOnSecondary">#243820</item>
+        <item name="colorSecondaryContainer">#3B5136</item>
+        <item name="colorOnSecondaryContainer">#DAE8D3</item>
+
+        <item name="android:colorBackground">#142019</item>
+        <item name="android:windowBackground">#142019</item>
+        <item name="colorOnBackground">#E3EFE5</item>
+
+        <item name="colorSurface">#142019</item>
+        <item name="colorOnSurface">#E3EFE5</item>
+        <item name="colorSurfaceVariant">#344438</item>
+        <item name="colorOnSurfaceVariant">#C0CEC0</item>
+        <item name="colorOutline">#8A9C8B</item>
+
+        <item name="android:textColorPrimary">#E3EFE5</item>
+        <item name="android:textColorSecondary">#C0CEC0</item>
+
     </style>
+
 </resources>
