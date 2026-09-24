@@ -57,6 +57,16 @@ public class AddIngredientActivity extends AppCompatActivity {
                 android.R.layout.simple_spinner_dropdown_item);
         unit.setAdapter(adapter);
 
+        // Apply the saved default when opening a new ingredient form.
+        if (savedInstanceState == null) {
+            String defaultUnit = getSharedPreferences(
+                    SettingsActivity.PREFS_NAME, MODE_PRIVATE)
+                    .getString(SettingsActivity.KEY_DEFAULT_UNIT, "g");
+
+            int defaultPosition = adapter.getPosition(defaultUnit);
+            unit.setSelection(defaultPosition >= 0 ? defaultPosition : 0);
+        }
+
         // Close this screen and return to the pantry.
         findViewById(R.id.btnCancel).setOnClickListener(view -> finish());
 
