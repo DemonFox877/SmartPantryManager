@@ -27,6 +27,7 @@ import androidx.core.view.WindowInsetsCompat;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import com.google.android.material.appbar.MaterialToolbar;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -42,6 +43,34 @@ public class MainActivity extends AppCompatActivity {
 
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
+        MaterialToolbar toolbar = findViewById(R.id.pantryToolbar);
+        toolbar.inflateMenu(R.menu.pantry_menu);
+
+        toolbar.setOnMenuItemClickListener(item -> {
+            int itemId = item.getItemId();
+
+            if (itemId == R.id.menuPantry) {
+                // We are already on the pantry screen.
+                return true;
+            }
+
+            if (itemId == R.id.menuSuggestedRecipes) {
+                startActivity(new Intent(
+                        MainActivity.this,
+                        SuggestedRecipesActivity.class));
+                return true;
+            }
+
+            if (itemId == R.id.menuSettings) {
+                startActivity(new Intent(
+                        MainActivity.this,
+                        SettingsActivity.class));
+                return true;
+            }
+
+            return false;
+        });
 
         ViewCompat.setOnApplyWindowInsetsListener(
                 findViewById(R.id.main), (view, insets) -> {
